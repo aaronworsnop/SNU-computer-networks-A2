@@ -75,7 +75,7 @@ int main(const int argc, const char **argv)
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
     {
-        perror("socket");
+        TRACE("Socket creation failed: %s\n", strerror(errno));
         exit(-1);
     }
 
@@ -87,7 +87,7 @@ int main(const int argc, const char **argv)
 
     if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
-        perror("bind");
+        TRACE("Socket bind failed: %s\n", strerror(errno));
         close_socket(sockfd);
     }
 }
