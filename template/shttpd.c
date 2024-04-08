@@ -71,4 +71,17 @@ int main(const int argc, const char **argv)
         perror("socket");
         exit(-1);
     }
+
+    struct sockaddr_in serv_addr;
+    memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY); // Listen on any IP
+    serv_addr.sin_port = htons(port);
+
+    if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    {
+        perror("bind");
+        close(sockfd);
+        exit(-1);
+    }
 }
