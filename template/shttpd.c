@@ -23,6 +23,13 @@ static const char *g_rootDir = "./"; /* root directory */
 const char *errMessage400 = "HTTP/1.0 400 Bad Request\r\nConnection: close\r\n\r\n";
 const char *errMessage500 = "HTTP/1.0 500 Internal Server Error\r\nConnection: close\r\n\r\n";
 
+// Function to close the socket and exit
+void close_socket(int sockfd)
+{
+    close(sockfd);
+    exit(-1);
+}
+
 /*--------------------------------------------------------------------------------*/
 static void
 PrintUsage(const char *prog)
@@ -81,7 +88,6 @@ int main(const int argc, const char **argv)
     if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
         perror("bind");
-        close(sockfd);
-        exit(-1);
+        close_socket(sockfd);
     }
 }
