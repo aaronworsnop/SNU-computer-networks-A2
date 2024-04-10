@@ -90,4 +90,10 @@ int main(const int argc, const char **argv)
         TRACE("Socket bind failed: %s\n", strerror(errno));
         close_socket(sockfd);
     }
+
+    if (listen(sockfd, 5) < 0)
+    {
+        TRACE("Socket listen failed: %s\n", strerror(errno));
+        close_socket(sockfd);
+    }
 }
