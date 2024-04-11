@@ -130,10 +130,13 @@ void handle_request(int client_sock)
         }
     }
 
-    // Extract the URL
+    // Extract the URL (appended to the root directory)
     char filepath[MAX_URL];
     memset(filepath, 0, MAX_URL);
-    strncpy(filepath, url, end_url - url);
+    size_t url_length = end_url - url;
+
+    // Construct the file path using snprintf to ensure null termination
+    snprintf(filepath, sizeof(filepath), "%s%.*s", g_rootDir, (int)url_length, url);
 
     int file = open(filepath, O_RDONLY);
     if (file < 0)
