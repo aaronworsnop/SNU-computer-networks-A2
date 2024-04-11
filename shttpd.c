@@ -89,6 +89,9 @@ void handle_request(int client_sock)
         close_socket(client_sock);
     }
 
+    char *http = strstr(end_url, "HTTP/1.");
+    char *end_http = http + 7;
+
     // Turn the rest of the request into lowercase
     for (char *c = end_url; *c != '\0'; c++)
     {
@@ -102,6 +105,29 @@ void handle_request(int client_sock)
         TRACE("Bad request.\r\n");
         send(client_sock, errMessage400, strlen(errMessage400), 0);
         close_socket(client_sock);
+    }
+
+    int persistent = 0;
+    if (*end_http == '0')
+    {
+        // HTTP/1.0, non-persistent connection
+        persistent = 0;
+    }
+    else
+    {
+        // HTTP/1.1, persistent connection unless specified otherwise
+        persistent = 1;
+
+        char *connection = strstr(end_http, "connection:");
+        if (connection != NULL)
+        {
+            char *end_connection = connection + 11;
+            if (strstr(end_connection, "close") != NULL)
+            {
+                // Specify non-persistent connection
+                persistent = 0;
+            }
+        }
     }
 }
 
