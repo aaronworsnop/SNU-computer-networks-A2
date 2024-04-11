@@ -14,6 +14,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/sendfile.h>
+#include <sys / select.h>
 
 #include "macro.h"
 #define MAX_VAL (MAX_HDR)
@@ -96,4 +97,11 @@ int main(const int argc, const char **argv)
         TRACE("Socket listen failed: %s\n", strerror(errno));
         close_socket(sockfd);
     }
+
+    // Set the file descriptor to monitor
+    fd_set read_fds;
+    FD_ZERO(&read_fds);
+    FD_SET(sockfd, &read_fds); // Add listening socket to read set
+
+    int max_fd = sockfd;
 }
