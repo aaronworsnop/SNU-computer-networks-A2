@@ -22,6 +22,7 @@
 
 static const char *g_rootDir = "./"; /* root directory */
 const char *errMessage400 = "HTTP/1.0 400 Bad Request\r\nConnection: close\r\n\r\n";
+const char *errMessageNotFound = "HTTP/1.0 404 Not Found\r\n\r\n";
 const char *errMessage500 = "HTTP/1.0 500 Internal Server Error\r\nConnection: close\r\n\r\n";
 
 // Function to close the socket and exit
@@ -48,6 +49,44 @@ void handle_request(int client_sock)
             // End of request
             break;
         }
+    }
+
+    if (total_bytes_recieved < 0)
+    {
+        TRACE("Error receiving request: %s\r\n", strerror(errno));
+        close_socket(client_sock);
+    }
+    else if (total_bytes_recieved == 0)
+    {
+        TRACE("Client closed connection.\r\n");
+        close_socket(client_sock);
+    }
+
+    // Check if the request is well formed (Includes GET, a URL, HTTP/1.0 or HTTP/1.1 and a host header)
+    char *get = strstr(request, "GET");
+    if (get == NULL)
+    {
+        TRACE("Bad request.\r\n");
+        send(client_sock, errMessage400, strlen(errMessage400), 0);
+        close_socket(client_sock);
+    }
+
+    // Extract the URL from the request
+    char *url = get + 4;
+    char *end_url = strstr(url, " ");
+    if (end_url == NULL)
+    {
+        TRACE("Bad request.\r\n");
+        send(client_sock, errMessage400, strlen(errMessage400), 0);
+        close_socket(client_sock);
+    }
+
+    // Check the HTTP version
+    if (strstr(end_url, "HTTP/1.0") == NULL || strstr(end_url, "HTTP/1.1") == NULL)
+    {
+        TRACE("Bad request.\r\n");
+        send(client_sock, errMessage400, strlen(errMessage400), 0);
+        close_socket(client_sock);
     }
 }
 
