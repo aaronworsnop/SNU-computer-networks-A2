@@ -31,6 +31,26 @@ void close_socket(int sockfd)
     exit(-1);
 }
 
+// Function to handle client requests
+void handle_request(int client_sock)
+{
+    // Recieve the request from the client
+    char *request = malloc(MAX_CONT + MAX_VAL + MAX_URL);
+    int bytes_recieved = 0;
+    int total_bytes_recieved = 0;
+
+    while ((bytes_recieved = recv(client_sock, request + total_bytes_recieved, sizeof(request), 0)) > 0)
+    {
+        total_bytes_recieved += bytes_recieved;
+
+        if (bytes_recieved == 0 || strstr(request, "\r\n\r\n") != NULL)
+        {
+            // End of request
+            break;
+        }
+    }
+}
+
 /*--------------------------------------------------------------------------------*/
 static void
 PrintUsage(const char *prog)
