@@ -129,6 +129,19 @@ void handle_request(int client_sock)
             }
         }
     }
+
+    // Extract the URL
+    char filepath[MAX_URL];
+    memset(filepath, 0, MAX_URL);
+    strncpy(filepath, url, end_url - url);
+
+    int file = open(filepath, O_RDONLY);
+    if (file < 0)
+    {
+        TRACE("Error opening file: %s\r\n", strerror(errno));
+        send(client_sock, errMessageNotFound, strlen(errMessageNotFound), 0);
+        close_socket(client_sock);
+    }
 }
 
 /*--------------------------------------------------------------------------------*/
