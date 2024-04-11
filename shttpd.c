@@ -88,6 +88,21 @@ void handle_request(int client_sock)
         send(client_sock, errMessage400, strlen(errMessage400), 0);
         close_socket(client_sock);
     }
+
+    // Turn the rest of the request into lowercase
+    for (char *c = end_url; *c != '\0'; c++)
+    {
+        *c = tolower(*c);
+    }
+
+    // Check if the request contains a host header
+    char *host = strstr(end_url, "host:");
+    if (host == NULL)
+    {
+        TRACE("Bad request.\r\n");
+        send(client_sock, errMessage400, strlen(errMessage400), 0);
+        close_socket(client_sock);
+    }
 }
 
 /*--------------------------------------------------------------------------------*/
