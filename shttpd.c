@@ -151,8 +151,25 @@ void handle_request(int client_sock)
     fstat(file, &file_stat);
     int content_length = file_stat.st_size;
 
-    printf("Content length: %d\r\n", content_length);
-    printf("Persistent: %i", persistent);
+    // Capture content
+    char *content = malloc(content_length);
+    read(file, content, content_length);
+
+    // Send the response
+    char *response = malloc(MAX_VAL + MAX_URL + content_length);
+    if (persistent == 0)
+    {
+        // Non-persistent connection
+        snprintf(response, MAX_VAL + MAX_URL + content_length, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\nConnection: Close\r\n\r\n%s\n", content_length, content);
+        send(client_sock, response, strlen(response), 0);
+        close_socket(client_sock);
+    }
+    else
+    {
+        // Persistent connection
+        snprintf(response, MAX_VAL + MAX_URL + content_length, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\nConnection: Keep-Alive\r\n\r\n%s\n", content_length, content);
+        send(client_sock, response, strlen(response), 0);
+    }
 }
 
 /*--------------------------------------------------------------------------------*/
