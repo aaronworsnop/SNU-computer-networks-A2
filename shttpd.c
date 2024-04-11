@@ -142,6 +142,16 @@ int main(const int argc, const char **argv)
                 else
                 {
                     // Handle HTTP request
+                    struct sockaddr_in client_addr;
+                    socklen_t client_len = sizeof(client_addr);
+                    int client_sock = accept(sockfd, (struct sockaddr *)&client_addr, &client_len);
+                    if (client_sock < 0)
+                    {
+                        TRACE("Socket accept failed: %s\n", strerror(errno));
+                        continue;
+                    }
+
+                    handle_request(client_sock);
                 }
             }
         }
