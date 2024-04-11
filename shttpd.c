@@ -14,7 +14,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/sendfile.h>
-#include <sys / select.h>
+#include <sys/select.h>
 
 #include "macro.h"
 #define MAX_VAL (MAX_HDR)
