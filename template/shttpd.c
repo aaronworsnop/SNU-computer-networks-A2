@@ -104,4 +104,46 @@ int main(const int argc, const char **argv)
     FD_SET(sockfd, &read_fds); // Add listening socket to read set
 
     int max_fd = sockfd;
+
+    while (1)
+    {
+        fd_set tmp_fds = read_fds; // Create a temporary copy of read_fds
+        int activity = select(max_fd + 1, &tmp_fds, NULL, NULL, NULL);
+        if (activity < 0)
+        {
+            TRACE("Select error: %s\n", strerror(errno));
+            continue;
+        }
+
+        // Check for activity on file descriptors
+        for (int fd = 0; fd <= max_fd; fd++)
+        {
+            if (FD_ISSET(fd, &tmp_fds))
+            {
+                if (fd == sockfd)
+                {
+                    // Activity on the listening socket (new connection)
+                    struct sockaddr_in client_addr;
+                    socklen_t client_len = sizeof(client_addr);
+                    int client_sockfd = accept(sockfd, (struct sockaddr *)&client_addr, &client_len);
+                    if (client_sockfd < 0)
+                    {
+                        TRACE("Socket accept failed: %s\n", strerror(errno));
+                        continue;
+                    }
+
+                    // Add new client socket to the set
+                    FD_SET(client_sockfd, &read_fds);
+                    if (client_sockfd > max_fd)
+                    {
+                        max_fd = client_sockfd;
+                    }
+                }
+                else
+                {
+                    // Handle HTTP request
+                }
+            }
+        }
+    }
 }
