@@ -82,7 +82,7 @@ void handle_request(int client_sock)
     }
 
     // Check the HTTP version
-    if (strstr(end_url, "HTTP/1.0") == NULL || strstr(end_url, "HTTP/1.1") == NULL)
+    if (strstr(end_url, "HTTP/1.0") == NULL && strstr(end_url, "HTTP/1.1") == NULL)
     {
         TRACE("Bad request.\r\n");
         send(client_sock, errMessage400, strlen(errMessage400), 0);
@@ -142,6 +142,14 @@ void handle_request(int client_sock)
         send(client_sock, errMessageNotFound, strlen(errMessageNotFound), 0);
         close_socket(client_sock);
     }
+
+    // Find the content-length
+    struct stat file_stat;
+    fstat(file, &file_stat);
+    int content_length = file_stat.st_size;
+
+    printf("Content length: %d\r\n", content_length);
+    printf("Persistent: %i", persistent);
 }
 
 /*--------------------------------------------------------------------------------*/
