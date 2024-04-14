@@ -155,8 +155,9 @@ void handle_request(int client_sock)
     int content_length = file_stat.st_size;
 
     // Capture content
-    char *content = malloc(content_length);
+    char *content = malloc(content_length + 1);
     read(file, content, content_length);
+    content[content_length] = '\0';
 
     // Send the response
     char *response = malloc(MAX_VAL + MAX_URL + content_length);
@@ -166,7 +167,7 @@ void handle_request(int client_sock)
         // Non-persistent connection
         snprintf(response, MAX_VAL + MAX_URL + content_length, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\nConnection: Close\r\n\r\n%s", content_length, content);
 
-        // send the response
+        // Send the response
         while (bytes_sent < strlen(response))
         {
             int current_bytes_sent = send(client_sock, response + bytes_sent, strlen(response) - bytes_sent, 0);
