@@ -63,8 +63,6 @@ void handle_request(int client_sock)
         close_socket(client_sock);
     }
 
-    printf("Request: %s\n", request);
-
     // Check if the request is well formed (Includes GET, a URL, HTTP/1.0 or HTTP/1.1 and a host header)
     char *get = strstr(request, "GET");
     if (get == NULL)
@@ -286,7 +284,6 @@ int main(const int argc, const char **argv)
 
     while (1)
     {
-        printf("Waiting for connection\n");
         fd_set tmp_fds = read_fds; // Create a temporary copy of read_fds
         int activity = select(max_fd + 1, &tmp_fds, NULL, NULL, NULL);
         if (activity < 0)
