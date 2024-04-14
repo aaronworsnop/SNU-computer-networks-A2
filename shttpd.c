@@ -178,6 +178,15 @@ void handle_request(int client_sock)
         TRACE("Error sending response: %s\r\n", strerror(errno));
         close_socket(client_sock);
     }
+
+    // Free memory
+    free(request);
+    free(content);
+    free(response);
+    close(file);
+
+    // Close the client socket
+    close(client_sock);
 }
 
 /*--------------------------------------------------------------------------------*/
