@@ -163,14 +163,14 @@ void handle_request(int client_sock)
     {
         // Non-persistent connection
         snprintf(response, MAX_VAL + MAX_URL + content_length, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\nConnection: Close\r\n\r\n%s\n", content_length, content);
-        bytes_sent = (client_sock, response, strlen(response), 0);
+        bytes_sent = send(client_sock, response, strlen(response), 0);
         close_socket(client_sock);
     }
     else
     {
         // Persistent connection
         snprintf(response, MAX_VAL + MAX_URL + content_length, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\nConnection: Keep-Alive\r\n\r\n%s\n", content_length, content);
-        bytes_sent = (client_sock, response, strlen(response), 0);
+        bytes_sent = send(client_sock, response, strlen(response), 0);
     }
 
     if (bytes_sent < 0)
