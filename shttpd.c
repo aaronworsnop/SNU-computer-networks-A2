@@ -40,9 +40,10 @@ void handle_request(int client_sock)
     int bytes_recieved = 0;
     int total_bytes_recieved = 0;
 
-    while ((bytes_recieved = recv(client_sock, request + total_bytes_recieved, sizeof(request), 0)) > 0)
+    while ((bytes_recieved = recv(client_sock, request + total_bytes_recieved, MAX_CONT + MAX_VAL + MAX_URL - total_bytes_recieved, 0)) > 0)
     {
         total_bytes_recieved += bytes_recieved;
+        request[total_bytes_recieved] = '\0';
 
         if (bytes_recieved == 0 || strstr(request, "\r\n\r\n") != NULL)
         {
@@ -61,6 +62,8 @@ void handle_request(int client_sock)
         TRACE("Client closed connection.\r\n");
         close_socket(client_sock);
     }
+
+    printf("Request: %s\n", request);
 
     // Check if the request is well formed (Includes GET, a URL, HTTP/1.0 or HTTP/1.1 and a host header)
     char *get = strstr(request, "GET");
@@ -143,7 +146,7 @@ void handle_request(int client_sock)
     {
         TRACE("Error opening file: %s\r\n", strerror(errno));
         send(client_sock, errMessageNotFound, strlen(errMessageNotFound), 0);
-        close_socket(client_sock);
+        close(client_sock);
     }
 
     // Find the content-length
@@ -164,7 +167,7 @@ void handle_request(int client_sock)
         // Non-persistent connection
         snprintf(response, MAX_VAL + MAX_URL + content_length, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\nConnection: Close\r\n\r\n%s\n", content_length, content);
         bytes_sent = send(client_sock, response, strlen(response), 0);
-        close_socket(client_sock);
+        close(client_sock);
     }
     else
     {
@@ -184,9 +187,6 @@ void handle_request(int client_sock)
     free(content);
     free(response);
     close(file);
-
-    // Close the client socket
-    close(client_sock);
 }
 
 /*--------------------------------------------------------------------------------*/
@@ -265,6 +265,7 @@ int main(const int argc, const char **argv)
 
     while (1)
     {
+        printf("Waiting for connection\n");
         fd_set tmp_fds = read_fds; // Create a temporary copy of read_fds
         int activity = select(max_fd + 1, &tmp_fds, NULL, NULL, NULL);
         if (activity < 0)
@@ -300,18 +301,7 @@ int main(const int argc, const char **argv)
                 else
                 {
                     // Handle HTTP request
-                    struct sockaddr_in client_addr;
-                    socklen_t client_len = sizeof(client_addr);
-                    int client_sock = accept(sockfd, (struct sockaddr *)&client_addr, &client_len);
-                    if (client_sock < 0)
-                    {
-                        TRACE("Socket accept failed: %s\n", strerror(errno));
-                        continue;
-                    }
-
-                    printf("Connection accepted\n");
-
-                    handle_request(client_sock);
+                    handle_request(fd);
                 }
             }
         }
