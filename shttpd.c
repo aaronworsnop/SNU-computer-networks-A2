@@ -160,20 +160,41 @@ void handle_request(int client_sock)
 
     // Send the response
     char *response = malloc(MAX_VAL + MAX_URL + content_length);
-    printf("Sending response\n");
     int bytes_sent = 0;
     if (persistent == 0)
     {
         // Non-persistent connection
-        snprintf(response, MAX_VAL + MAX_URL + content_length, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\nConnection: Close\r\n\r\n%s\n", content_length, content);
-        bytes_sent = send(client_sock, response, strlen(response), 0);
+        snprintf(response, MAX_VAL + MAX_URL + content_length, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\nConnection: Close\r\n\r\n%s", content_length, content);
+
+        // send the response
+        while (bytes_sent < strlen(response))
+        {
+            int current_bytes_sent = send(client_sock, response + bytes_sent, strlen(response) - bytes_sent, 0);
+            if (current_bytes_sent < 0)
+            {
+                TRACE("Error sending response: %s\r\n", strerror(errno));
+                close_socket(client_sock);
+            }
+            bytes_sent += current_bytes_sent;
+        }
         close(client_sock);
     }
     else
     {
         // Persistent connection
-        snprintf(response, MAX_VAL + MAX_URL + content_length, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\nConnection: Keep-Alive\r\n\r\n%s\n", content_length, content);
-        bytes_sent = send(client_sock, response, strlen(response), 0);
+        snprintf(response, MAX_VAL + MAX_URL + content_length, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\nConnection: Keep-Alive\r\n\r\n%s", content_length, content);
+
+        // send the response
+        while (bytes_sent < strlen(response))
+        {
+            int current_bytes_sent = send(client_sock, response + bytes_sent, strlen(response) - bytes_sent, 0);
+            if (current_bytes_sent < 0)
+            {
+                TRACE("Error sending response: %s\r\n", strerror(errno));
+                close_socket(client_sock);
+            }
+            bytes_sent += current_bytes_sent;
+        }
     }
 
     if (bytes_sent < 0)
@@ -260,7 +281,6 @@ int main(const int argc, const char **argv)
     fd_set read_fds;
     FD_ZERO(&read_fds);
     FD_SET(sockfd, &read_fds); // Add listening socket to read set
-
     int max_fd = sockfd;
 
     while (1)
@@ -281,27 +301,32 @@ int main(const int argc, const char **argv)
             {
                 if (fd == sockfd)
                 {
-                    // Activity on the listening socket (new connection)
+                    // New connection
                     struct sockaddr_in client_addr;
                     socklen_t client_len = sizeof(client_addr);
-                    int client_sockfd = accept(sockfd, (struct sockaddr *)&client_addr, &client_len);
-                    if (client_sockfd < 0)
+                    int client_sock = accept(sockfd, (struct sockaddr *)&client_addr, &client_len);
+                    if (client_sock < 0)
                     {
-                        TRACE("Socket accept failed: %s\n", strerror(errno));
-                        continue;
+                        if (errno != EWOULDBLOCK && errno != EAGAIN)
+                        {
+                            perror("accept");
+                        }
                     }
-
-                    // Add new client socket to the set
-                    FD_SET(client_sockfd, &read_fds);
-                    if (client_sockfd > max_fd)
+                    else
                     {
-                        max_fd = client_sockfd;
+                        // Add client socket to the set
+                        FD_SET(client_sock, &read_fds);
+                        if (client_sock > max_fd)
+                        {
+                            max_fd = client_sock;
+                        }
                     }
                 }
                 else
                 {
-                    // Handle HTTP request
+                    // Handle client request
                     handle_request(fd);
+                    FD_CLR(fd, &read_fds); // Remove client socket from set
                 }
             }
         }
