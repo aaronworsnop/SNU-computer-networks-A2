@@ -157,18 +157,26 @@ void handle_request(int client_sock)
 
     // Send the response
     char *response = malloc(MAX_VAL + MAX_URL + content_length);
+    printf("Sending response\n");
+    int bytes_sent = 0;
     if (persistent == 0)
     {
         // Non-persistent connection
         snprintf(response, MAX_VAL + MAX_URL + content_length, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\nConnection: Close\r\n\r\n%s\n", content_length, content);
-        send(client_sock, response, strlen(response), 0);
+        bytes_sent = (client_sock, response, strlen(response), 0);
         close_socket(client_sock);
     }
     else
     {
         // Persistent connection
         snprintf(response, MAX_VAL + MAX_URL + content_length, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\nConnection: Keep-Alive\r\n\r\n%s\n", content_length, content);
-        send(client_sock, response, strlen(response), 0);
+        bytes_sent = (client_sock, response, strlen(response), 0);
+    }
+
+    if (bytes_sent < 0)
+    {
+        TRACE("Error sending response: %s\r\n", strerror(errno));
+        close_socket(client_sock);
     }
 }
 
@@ -291,6 +299,8 @@ int main(const int argc, const char **argv)
                         TRACE("Socket accept failed: %s\n", strerror(errno));
                         continue;
                     }
+
+                    printf("Connection accepted\n");
 
                     handle_request(client_sock);
                 }
